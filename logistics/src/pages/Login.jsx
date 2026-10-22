@@ -17,13 +17,8 @@ export default function Login() {
   const handleRoleTabClick = (role) => {
     setSelectedRole(role);
     setError('');
-    if (role === 'admin') {
-      setEmail('admin@unifiedlogistics.com');
-      setPassword('Password@123');
-    } else {
-      setEmail('');
-      setPassword('');
-    }
+    setEmail('');
+    setPassword('');
   };
 
   const handleLogin = async (e) => {
@@ -70,7 +65,7 @@ export default function Login() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">TrackFlow Portal</h1>
-          <p className="text-xs text-slate-500 mt-1">Sign in with your merchant, partner, or customer account</p>
+          <p className="text-xs text-slate-500 mt-1">Sign in to your account</p>
         </div>
 
         {/* Role Select Tabs */}
@@ -121,25 +116,15 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Role Context Notification */}
+        {/* Role Context Notice (Without exposed credentials) */}
         {selectedRole === 'admin' && (
           <div className="mb-5 flex items-start gap-2.5 rounded-xl bg-amber-50 border border-amber-200/80 p-3 text-xs text-amber-900">
             <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <span className="font-bold">Merchant / Seller Admin Role:</span>
+              <span className="font-bold">Merchant & Admin Portal:</span>
               <p className="text-amber-700 mt-0.5">
-                Full access to upload & sell products, adjust prices, manage catalog inventory, and dispatch drivers.
+                Authorized sellers and administrators have access to catalog management, inventory control, and order dispatch.
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@unifiedlogistics.com');
-                  setPassword('Password@123');
-                }}
-                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 underline hover:text-amber-950"
-              >
-                Auto-fill Demo Admin Credentials
-              </button>
             </div>
           </div>
         )}
@@ -158,7 +143,7 @@ export default function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={selectedRole === 'admin' ? 'admin@unifiedlogistics.com' : 'user@example.com'}
+              placeholder="name@example.com"
               className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
