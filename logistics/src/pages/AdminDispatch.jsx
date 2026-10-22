@@ -12,17 +12,19 @@ export default function AdminDispatch() {
 
   const token = localStorage.getItem('token');
 
-  // Load orders, catalog, and active delivery partners
+  const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onrender.com';
+
   const loadData = async () => {
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
 
       const [resOrders, resProducts, resPartners] = await Promise.all([
-        fetch('http://localhost:5000/api/orders', { headers }),
-        fetch('http://localhost:5000/api/products'),
-        fetch('http://localhost:5000/api/auth/delivery-partners', { headers }),
+        fetch(`${API_URL}/api/orders`, { headers }),
+        fetch(`${API_URL}/api/products`),
+        fetch(`${API_URL}/api/auth/delivery-partners`, { headers }),
       ]);
+
 
       const [ordersData, productsData, partnersData] = await Promise.all([
         resOrders.json(),
