@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
 export default function Login() {
@@ -8,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -28,16 +30,14 @@ export default function Login() {
         throw new Error(data.message || 'Invalid credentials');
       }
 
-      // Automatically persist token and role to this device's storage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
-      localStorage.setItem('user', JSON.stringify({ name: data.name, email: data.email }));
+      // Sync user data to AuthContext and localStorage
+      login(data);
 
       // Automatically route according to role
       if (data.role === 'admin') {
         navigate('/admin');
       } else if (data.role === 'delivery_partner') {
-        navigate('/delivery');
+        navigate('/partner');
       } else {
         navigate('/');
       }
