@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_BASE_URL } from '../config/api';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -48,7 +49,7 @@ export default function OrderTrack() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/orders/my-orders', {
+        const res = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, {
           headers: { Authorization: `Bearer ${user?.token}` },
         });
         const matched = res.data.find((o) => o._id === id);
@@ -71,7 +72,7 @@ export default function OrderTrack() {
 
   // 2. Real-Time Socket Connection
   useEffect(() => {
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(API_BASE_URL);
 
     socketRef.current.emit('join_order_room', id);
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_BASE_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { Truck, Navigation, CheckCircle2, PackageCheck, Radio, AlertCircle } from 'lucide-react';
 
@@ -19,7 +20,7 @@ export default function PartnerDashboard() {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(API_BASE_URL);
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
       if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current);
@@ -30,7 +31,7 @@ export default function PartnerDashboard() {
   // Fetch assigned orders
   const fetchAssignedRuns = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/orders/partner-orders', {
+      const res = await axios.get(`${API_BASE_URL}/api/orders/partner-orders`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setOrders(res.data);
@@ -60,7 +61,7 @@ export default function PartnerDashboard() {
     if (!activeOrder) return;
     try {
       await axios.patch(
-        `http://localhost:5000/api/orders/${activeOrder._id}/status`,
+        `${API_BASE_URL}/api/orders/${activeOrder._id}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );

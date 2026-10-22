@@ -2,19 +2,7 @@ import React, { useState, useEffect } from 'react';
 // Verify filename matches AddProductModal vs AddProductModel
 import AddProductModal from '../components/AddProductModel';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onrender.com';
-
-// Helper to prevent mixed content errors from legacy local DB entries
-const getSafeImageUrl = (url) => {
-  if (!url) return '/placeholder.png';
-  if (url.includes('localhost:5000')) {
-    return `${API_URL}${url.split('localhost:5000')[1]}`;
-  }
-  if (url.startsWith('/uploads')) {
-    return `${API_URL}${url}`;
-  }
-  return url;
-};
+import { API_BASE_URL as API_URL, getSafeImageUrl } from '../config/api';
 
 export default function AdminDispatch() {
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' or 'inventory'

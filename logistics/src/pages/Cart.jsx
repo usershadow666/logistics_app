@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Trash2, ShieldCheck, MapPin, Banknote, CreditCard } from 'lucide-react';
@@ -40,7 +41,7 @@ export default function Cart() {
         paymentMethod,
       };
 
-      const res = await axios.post('http://localhost:5000/api/orders', payload, {
+      const res = await axios.post(`${API_BASE_URL}/api/orders`, payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
@@ -64,7 +65,7 @@ export default function Cart() {
         handler: async function (response) {
           try {
             await axios.post(
-              'http://localhost:5000/api/orders/verify-payment',
+              `${API_BASE_URL}/api/orders/verify-payment`,
               {
                 orderId: order._id,
                 razorpayPaymentId: response.razorpay_payment_id,

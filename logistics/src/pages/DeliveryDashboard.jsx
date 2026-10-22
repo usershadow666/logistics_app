@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { API_BASE_URL } from '../config/api';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BACKEND_URL = API_BASE_URL;
 
 export default function DeliveryDashboard() {
   const [orders, setOrders] = useState([]);

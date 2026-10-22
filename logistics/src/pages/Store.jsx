@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL, getSafeImageUrl } from '../config/api';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag } from 'lucide-react';
 
@@ -11,7 +12,7 @@ export default function Store() {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/products');
+        const res = await axios.get(`${API_BASE_URL}/api/products`);
         setProducts(res.data);
       } catch (err) {
         console.error('Failed to load catalog', err);
@@ -32,7 +33,7 @@ export default function Store() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {products.map((prod) => (
           <div key={prod._id} className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
-            <img src={prod.imageUrl} alt={prod.name} className="h-48 w-full object-cover" />
+            <img src={getSafeImageUrl(prod.imageUrl)} alt={prod.name} className="h-48 w-full object-cover" />
             <div className="p-4">
               <h2 className="font-bold text-lg text-slate-800">{prod.name}</h2>
               <p className="text-sm text-slate-500 line-clamp-2 my-2">{prod.description}</p>
