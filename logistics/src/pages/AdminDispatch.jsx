@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AddProductModal from '../components/AddProductModel';
+import api from '../config/api';
 
 
 export default function AdminDispatch() {
@@ -12,29 +13,39 @@ export default function AdminDispatch() {
 
   const token = localStorage.getItem('token');
 
-  // Load orders, catalog, and active delivery partners
+const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onrender.com';
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const headers = { Authorization: `Bearer ${token}` };
+
+      // Make sure token is retrieved fresh from localStorage
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const [resOrders, resProducts, resPartners] = await Promise.all([
-        fetch('http://localhost:5000/api/orders', { headers }),
-        fetch('http://localhost:5000/api/products'),
-        fetch('http://localhost:5000/api/auth/delivery-partners', { headers }),
+        fetch(`${API_URL}/api/orders`, { headers }),
+        fetch(`${API_URL}/api/products`),
+        fetch(`${API_URL}/api/auth/delivery-partners`, { headers }),
       ]);
 
-      const [ordersData, productsData, partnersData] = await Promise.all([
-        resOrders.json(),
-        resProducts.json(),
-        resPartners.json(),
-      ]);
+      // Check for authorization errors specifically
+      if (resOrders.status === 401 || resPartners.status === 401) {
+        console.error('Session expired or unauthorized. Token needs refresh.');
+        // Only redirect if explicitly 401
+        // navigate('/login');
+        return;
+      }
+
+      const ordersData = await resOrders.json();
+      const productsData = await resProducts.json();
+      const partnersData = await resPartners.json();
 
       setOrders(Array.isArray(ordersData) ? ordersData : []);
       setProducts(Array.isArray(productsData) ? productsData : []);
       setPartners(Array.isArray(partnersData) ? partnersData : []);
     } catch (err) {
-      console.error('Error fetching admin data:', err);
+      console.error('Failed to load admin dispatch data:', err);
     } finally {
       setLoading(false);
     }
@@ -48,7 +59,8 @@ export default function AdminDispatch() {
   const handleAssignPartner = async (orderId, partnerId) => {
     if (!partnerId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}/assign`, {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/orders/${orderId}/assign`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
