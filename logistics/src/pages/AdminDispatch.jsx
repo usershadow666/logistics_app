@@ -13,8 +13,7 @@ export default function AdminDispatch() {
 
   const token = localStorage.getItem('token');
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onrender.com';
-
+  // Load orders, catalog, and active delivery partners
   const loadData = async () => {
     try {
       setLoading(true);
@@ -28,6 +27,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onre
         fetch(`${API_URL}/api/products`),
         fetch(`${API_URL}/api/auth/delivery-partners`, { headers }),
       ]);
+
 
       // Check for authorization errors specifically
       if (resOrders.status === 401 || resPartners.status === 401) {
