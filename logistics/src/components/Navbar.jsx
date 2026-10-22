@@ -36,8 +36,8 @@ export default function Navbar() {
         )}
 
         {user?.role === 'admin' && (
-          <Link to="/admin" className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-medium">
-            <ShieldCheck className="w-5 h-5" /> Admin Dispatch
+          <Link to="/admin" className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-semibold bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-lg text-sm transition">
+            <ShieldCheck className="w-4 h-4" /> Merchant & Dispatch Hub (Sell Goods)
           </Link>
         )}
 
@@ -50,15 +50,18 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-400">
-              {user.name} <span className="text-xs uppercase bg-slate-800 px-2 py-0.5 rounded text-indigo-400 font-semibold">{user.role}</span>
+              {user.name} <span className="text-xs uppercase bg-slate-800 px-2 py-0.5 rounded text-indigo-400 font-semibold">{user.role === 'admin' ? 'Merchant / Admin' : user.role}</span>
             </span>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400">
+            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400" title="Logout">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
         ) : (
-          <div className="flex gap-4">
-            <Link to="/login" className="hover:text-indigo-300">Login</Link>
+          <div className="flex items-center gap-4">
+            <Link to="/register" className="hidden sm:inline-block text-xs font-semibold text-amber-400 hover:text-amber-300">
+              🛍️ Sell on TrackFlow
+            </Link>
+            <Link to="/login" className="hover:text-indigo-300 text-sm">Login</Link>
             <Link to="/register" className="bg-indigo-600 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-indigo-500">Sign Up</Link>
           </div>
         )}

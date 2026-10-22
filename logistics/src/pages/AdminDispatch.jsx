@@ -78,10 +78,10 @@ export default function AdminDispatch() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Logistics Dispatch & Operations
+              Merchant Operations & Logistics Dispatch
             </h1>
             <p className="text-sm text-slate-500">
-              Assign active drivers, track shipments, and manage store stock
+              Sell and list goods, manage catalog stock, and dispatch drivers for orders
             </p>
           </div>
 
@@ -109,9 +109,9 @@ export default function AdminDispatch() {
             {/* Add Item Modal Trigger */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
             >
-              <span className="text-base font-bold">+</span> Add Item
+              <span className="text-base font-bold">+</span> Sell New Product
             </button>
           </div>
         </div>

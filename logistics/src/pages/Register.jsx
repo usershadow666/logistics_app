@@ -37,7 +37,9 @@ export default function Register() {
       // Auto-login upon registration
       login(res.data);
 
-      if (res.data.role === 'delivery_partner') {
+      if (res.data.role === 'admin') {
+        navigate('/admin');
+      } else if (res.data.role === 'delivery_partner') {
         navigate('/partner');
       } else {
         navigate('/');
@@ -129,9 +131,15 @@ export default function Register() {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             >
-              <option value="customer">Customer (Order & Track)</option>
+              <option value="customer">Customer (Order & Track Goods)</option>
+              <option value="admin">Merchant / Admin (Sell Goods & Manage Dispatch)</option>
               <option value="delivery_partner">Delivery Partner (Deliver & Earn)</option>
             </select>
+            {formData.role === 'admin' && (
+              <div className="mt-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <span className="font-bold">🛍️ Seller Privileges:</span> As an Admin / Merchant, you can list new products for sale, update catalog stock, and assign delivery partners.
+              </div>
+            )}
           </div>
 
           <button
