@@ -98,7 +98,10 @@ export const assignOrder = async (req, res) => {
       req.params.id,
       { assignedPartner: partnerId, status: 'processing' },
       { new: true }
-    ).populate('assignedPartner', 'name phone');
+    )
+      .populate('items.product')
+      .populate('customer', 'name phone email')
+      .populate('assignedPartner', 'name phone');
 
     res.status(200).json(order);
   } catch (error) {

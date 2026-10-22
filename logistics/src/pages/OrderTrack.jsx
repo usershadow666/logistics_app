@@ -49,15 +49,55 @@ export default function OrderTrack() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        });
-        const matched = res.data.find((o) => o._id === id);
+        let matched = null;
+        const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+
+        // 1. Try role-specific endpoints
+        if (user?.role === 'admin') {
+          try {
+            const res = await axios.get(`${API_BASE_URL}/api/orders/all`, { headers });
+            matched = res.data.find((o) => o._id === id);
+          } catch (e) {
+            console.error('Failed fetching all orders:', e);
+          }
+        } else if (user?.role === 'delivery_partner') {
+          try {
+            const res = await axios.get(`${API_BASE_URL}/api/orders/partner-orders`, { headers });
+            matched = res.data.find((o) => o._id === id);
+          } catch (e) {
+            console.error('Failed fetching partner orders:', e);
+          }
+        }
+
+        // 2. Fallback to customer's own orders
+        if (!matched) {
+          try {
+            const res = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, { headers });
+            matched = res.data.find((o) => o._id === id);
+          } catch (e) {
+            console.error('Failed fetching my orders:', e);
+          }
+        }
+
+        // 3. Fallback for admin if not already tried
+        if (!matched && user?.role === 'admin') {
+          try {
+            const res = await axios.get(`${API_BASE_URL}/api/orders/all`, { headers });
+            matched = res.data.find((o) => o._id === id);
+          } catch (e) {
+            console.error('Failed fallback orders fetch:', e);
+          }
+        }
+
         if (matched) {
           setOrder(matched);
           // Initial position defaults to driver's location or near destination
-          const initialDriverLat = matched.assignedPartner?.currentLocation?.lat || matched.deliveryAddress.lat - 0.015;
-          const initialDriverLng = matched.assignedPartner?.currentLocation?.lng || matched.deliveryAddress.lng - 0.015;
+          const initialDriverLat =
+            matched.assignedPartner?.currentLocation?.lat ||
+            (matched.deliveryAddress?.lat ? matched.deliveryAddress.lat - 0.015 : 17.7231);
+          const initialDriverLng =
+            matched.assignedPartner?.currentLocation?.lng ||
+            (matched.deliveryAddress?.lng ? matched.deliveryAddress.lng - 0.015 : 83.3013);
           setDriverPos([initialDriverLat, initialDriverLng]);
         }
       } catch (err) {

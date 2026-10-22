@@ -18,6 +18,7 @@ router.get('/my-orders', protect, getMyOrders);
 router.patch('/:id/assign', protect, authorize('admin'), assignOrder);
 router.get('/partner-orders', protect, authorize('delivery_partner'), getPartnerOrders);
 router.patch('/:id/status', protect, authorize('delivery_partner'), updateOrderStatus);
-router.get('/all',protect,authorize('admin'),getAllOrders);
+router.get('/', protect, authorize('admin'), getAllOrders);
+router.get('/all', protect, authorize('admin'), getAllOrders);
 
 export default router;
