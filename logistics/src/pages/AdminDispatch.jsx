@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
+// Verify filename matches AddProductModal vs AddProductModel
 import AddProductModal from '../components/AddProductModel';
-import api from '../config/api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://logistics-app-j78n.onrender.com';
+
+// Helper to prevent mixed content errors from legacy local DB entries
+const getSafeImageUrl = (url) => {
+  if (!url) return '/placeholder.png';
+  if (url.includes('localhost:5000')) {
+    return `${API_URL}${url.split('localhost:5000')[1]}`;
+  }
+  if (url.startsWith('/uploads')) {
+    return `${API_URL}${url}`;
+  }
+  return url;
+};
 
 export default function AdminDispatch() {
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' or 'inventory'
@@ -11,14 +24,9 @@ export default function AdminDispatch() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem('token');
-
-  // Load orders, catalog, and active delivery partners
   const loadData = async () => {
     try {
       setLoading(true);
-
-      // Make sure token is retrieved fresh from localStorage
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -28,12 +36,8 @@ export default function AdminDispatch() {
         fetch(`${API_URL}/api/auth/delivery-partners`, { headers }),
       ]);
 
-
-      // Check for authorization errors specifically
       if (resOrders.status === 401 || resPartners.status === 401) {
-        console.error('Session expired or unauthorized. Token needs refresh.');
-        // Only redirect if explicitly 401
-        // navigate('/login');
+        console.warn('Session expired or unauthorized token.');
         return;
       }
 
@@ -138,49 +142,57 @@ export default function AdminDispatch() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {orders.map((order) => (
-                  <tr key={order._id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-800">
-                      #{order._id.slice(-6).toUpperCase()}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-slate-900">{order.customer?.name || 'Guest'}</div>
-                      <div className="text-xs text-slate-400">
-                        {order.deliveryAddress?.street}, {order.deliveryAddress?.city}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-slate-900">
-                      ₹{order.totalAmount}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                          order.status === 'delivered'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : order.status === 'out_for_delivery'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {order.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <select
-                        value={order.assignedPartner?._id || ''}
-                        onChange={(e) => handleAssignPartner(order._id, e.target.value)}
-                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="">-- Assign Driver --</option>
-                        {partners.map((partner) => (
-                          <option key={partner._id} value={partner._id}>
-                            {partner.name} ({partner.phone || 'No Phone'})
-                          </option>
-                        ))}
-                      </select>
+                {orders.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-8 text-slate-400">
+                      {loading ? 'Loading orders from Render backend...' : 'No orders in system'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  orders.map((order) => (
+                    <tr key={order._id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-800">
+                        #{order._id.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-medium text-slate-900">{order.customer?.name || 'Guest'}</div>
+                        <div className="text-xs text-slate-400">
+                          {order.deliveryAddress?.street}, {order.deliveryAddress?.city}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-900">
+                        ₹{order.totalAmount}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                            order.status === 'delivered'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : order.status === 'out_for_delivery'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {order.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <select
+                          value={order.assignedPartner?._id || ''}
+                          onChange={(e) => handleAssignPartner(order._id, e.target.value)}
+                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-none"
+                        >
+                          <option value="">-- Assign Driver --</option>
+                          {partners.map((partner) => (
+                            <option key={partner._id} value={partner._id}>
+                              {partner.name} ({partner.phone || 'No Phone'})
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -199,25 +211,33 @@ export default function AdminDispatch() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((item) => (
-                  <tr key={item._id} className="hover:bg-slate-50/60 transition">
-                    <td className="flex items-center gap-3 px-5 py-3.5 font-medium text-slate-900">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="h-10 w-10 rounded-lg object-cover border"
-                      />
-                      <span>{item.name}</span>
-                    </td>
-                    <td className="px-5 py-3.5">{item.category}</td>
-                    <td className="px-5 py-3.5 font-semibold text-slate-800">₹{item.price}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                        {item.stock} units
-                      </span>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="text-center py-8 text-slate-400">
+                      {loading ? 'Loading catalog...' : 'No products available'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  products.map((item) => (
+                    <tr key={item._id} className="hover:bg-slate-50/60 transition">
+                      <td className="flex items-center gap-3 px-5 py-3.5 font-medium text-slate-900">
+                        <img
+                          src={getSafeImageUrl(item.imageUrl)}
+                          alt={item.name}
+                          className="h-10 w-10 rounded-lg object-cover border"
+                        />
+                        <span>{item.name}</span>
+                      </td>
+                      <td className="px-5 py-3.5">{item.category}</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">₹{item.price}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                          {item.stock} units
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
