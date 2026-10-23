@@ -9,6 +9,8 @@ import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import User from './models/User.js';
+import Order from './models/Order.js';
 
 dotenv.config();
 
@@ -26,28 +28,105 @@ const __dirname = path.dirname(__filename);
 
 export const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Allows WebSocket handshakes from Vercel
+    origin: (origin, callback) => {
+      // Allow any origin for WebSockets in local/preview/production
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive for real-time mobile & cross-origin tracking
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
-
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
+  // Customer or Admin joining a specific order tracking room
   socket.on('join_order_room', (orderId) => {
-    console.log(`Socket ${socket.id} joined room: order_${orderId}`);
-    socket.join(`order_${orderId}`);
+    if (!orderId) return;
+    const room = `order_${orderId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined room: ${room}`);
   });
 
-  socket.on('driver_location_ping', ({ orderId, lat, lng }) => {
-    console.log(`Location update for order ${orderId}: ${lat}, ${lng}`);
-    io.to(`order_${orderId}`).emit('partner_location_stream', {
-      lat,
-      lng,
-      timestamp: new Date(),
-    });
+  socket.on('leave_order_room', (orderId) => {
+    if (!orderId) return;
+    const room = `order_${orderId}`;
+    socket.leave(room);
+    console.log(`Socket ${socket.id} left room: ${room}`);
+  });
+
+  // Admin joining the overarching live fleet room to track all partners
+  socket.on('join_admin_room', () => {
+    socket.join('admin_fleet_room');
+    console.log(`Admin socket ${socket.id} joined admin_fleet_room`);
+  });
+
+  socket.on('leave_admin_room', () => {
+    socket.leave('admin_fleet_room');
+    console.log(`Admin socket ${socket.id} left admin_fleet_room`);
+  });
+
+  // Delivery partner broadcasting live location ping
+  socket.on('driver_location_ping', async (data) => {
+    const { orderId, partnerId, partnerName, lat, lng, speed = 0, heading = 0 } = data || {};
+    if (lat === undefined || lng === undefined) return;
+
+    const payload = {
+      orderId,
+      partnerId,
+      partnerName,
+      lat: Number(lat),
+      lng: Number(lng),
+      speed: Number(speed),
+      heading: Number(heading),
+      timestamp: new Date().toISOString(),
+    };
+
+    // 1. Emit to customer tracking room for this specific order
+    if (orderId) {
+      io.to(`order_${orderId}`).emit('partner_location_stream', payload);
+    }
+
+    // 2. Emit to admin fleet room for live portal monitoring
+    io.to('admin_fleet_room').emit('partner_location_stream', payload);
+
+    // 3. Persist latest location in MongoDB asynchronously
+    try {
+      if (partnerId) {
+        await User.findByIdAndUpdate(partnerId, {
+          currentLocation: {
+            lat: Number(lat),
+            lng: Number(lng),
+            updatedAt: new Date(),
+          },
+        }).exec();
+      }
+
+      if (orderId) {
+        await Order.findByIdAndUpdate(orderId, {
+          lastDriverLocation: {
+            lat: Number(lat),
+            lng: Number(lng),
+            speed: Number(speed),
+            heading: Number(heading),
+            updatedAt: new Date(),
+          },
+        }).exec();
+      }
+    } catch (err) {
+      console.error('Failed to persist driver location ping:', err.message);
+    }
+  });
+
+  // Real-time status update broadcast
+  socket.on('driver_status_ping', ({ orderId, status, partnerId }) => {
+    if (!orderId) return;
+    const payload = { orderId, status, partnerId, timestamp: new Date().toISOString() };
+    io.to(`order_${orderId}`).emit('order_status_updated', payload);
+    io.to('admin_fleet_room').emit('order_status_updated', payload);
   });
 
   socket.on('disconnect', () => {

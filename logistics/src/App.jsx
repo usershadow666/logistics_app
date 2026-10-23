@@ -8,9 +8,10 @@ import AdminDispatch from './pages/AdminDispatch';
 import Login from './pages/Login';
 import Cart from './pages/Cart';
 import Register from './pages/Register';
-import PartnerDashboard from './pages/PartnerDashboard';import OrderTrack from './pages/OrderTrack';
+import PartnerDashboard from './pages/PartnerDashboard';
+import OrderTrack from './pages/OrderTrack';
 import DeliveryDashboard from './pages/DeliveryDashboard';
-
+import MyOrders from './pages/MyOrders';
 
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
               } />
               <Route path="/cart" element={<Cart />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/partner" element={<PartnerRoute><PartnerDashboard /></PartnerRoute>} />
               <Route path="/orders/:id/track" element={<OrderTrack />} />
               <Route path="/delivery" element={<DeliveryDashboard />} />

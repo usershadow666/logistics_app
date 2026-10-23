@@ -23,10 +23,12 @@ const orderSchema = new mongoose.Schema(
       default: 'placed',
     },
     assignedPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    paymentInfo: {
-      razorpayOrderId: { type: String },
-      razorpayPaymentId: { type: String },
-      status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+    lastDriverLocation: {
+      lat: { type: Number },
+      lng: { type: Number },
+      speed: { type: Number, default: 0 },
+      heading: { type: Number, default: 0 },
+      updatedAt: { type: Date },
     },
     paymentMethod: {
       type: String,
@@ -39,7 +41,7 @@ const orderSchema = new mongoose.Schema(
       status: {
         type: String,
         enum: ['pending', 'paid', 'failed'],
-        default: 'pending'
+        default: 'pending',
       },
     },
   },

@@ -68,6 +68,14 @@ export default function PartnerDashboard() {
       setActiveOrder((prev) => ({ ...prev, status: newStatus }));
       fetchAssignedRuns();
 
+      if (socketRef.current) {
+        socketRef.current.emit('driver_status_ping', {
+          orderId: activeOrder._id,
+          status: newStatus,
+          partnerId: user?._id,
+        });
+      }
+
       if (newStatus === 'delivered') {
         stopSimulation();
         stopRealGps();
@@ -90,10 +98,14 @@ export default function PartnerDashboard() {
         (pos) => {
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setCurrentCoords(coords);
-          socketRef.current.emit('driver_location_ping', {
-            orderId: activeOrder._id,
+          socketRef.current?.emit('driver_location_ping', {
+            orderId: activeOrder?._id,
+            partnerId: user?._id,
+            partnerName: user?.name,
             lat: coords.lat,
             lng: coords.lng,
+            speed: pos.coords.speed || 30,
+            heading: pos.coords.heading || 0,
           });
         },
         (err) => console.error(err),
@@ -116,8 +128,8 @@ export default function PartnerDashboard() {
       stopRealGps();
       setIsSimulating(true);
 
-      const targetLat = activeOrder.deliveryAddress.lat;
-      const targetLng = activeOrder.deliveryAddress.lng;
+      const targetLat = activeOrder.deliveryAddress?.lat || 17.7384;
+      const targetLng = activeOrder.deliveryAddress?.lng || 83.3364;
       let stepCount = 0;
       const totalSteps = 40; // 40 increments of smooth simulated motion
 
@@ -130,10 +142,14 @@ export default function PartnerDashboard() {
           const nextLat = prev.lat + (targetLat - prev.lat) * 0.08;
           const nextLng = prev.lng + (targetLng - prev.lng) * 0.08;
 
-          socketRef.current.emit('driver_location_ping', {
+          socketRef.current?.emit('driver_location_ping', {
             orderId: activeOrder._id,
+            partnerId: user?._id,
+            partnerName: user?.name,
             lat: nextLat,
             lng: nextLng,
+            speed: 38,
+            heading: 45,
           });
 
           return { lat: nextLat, lng: nextLng };

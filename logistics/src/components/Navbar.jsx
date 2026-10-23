@@ -24,6 +24,9 @@ export default function Navbar() {
         {user?.role === 'customer' && (
           <>
             <Link to="/" className="hover:text-indigo-300">Catalog</Link>
+            <Link to="/my-orders" className="hover:text-indigo-300 flex items-center gap-1.5 font-medium">
+              <Package className="w-4 h-4 text-indigo-400" /> My Orders & Tracking
+            </Link>
             <Link to="/cart" className="relative flex items-center hover:text-indigo-300">
               <ShoppingCart className="w-5 h-5" />
               {cartItems.length > 0 && (
@@ -37,7 +40,7 @@ export default function Navbar() {
 
         {user?.role === 'admin' && (
           <Link to="/admin" className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-semibold bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-lg text-sm transition">
-            <ShieldCheck className="w-4 h-4" /> Merchant & Dispatch Hub (Sell Goods)
+            <ShieldCheck className="w-4 h-4" /> Merchant & Fleet Dispatch
           </Link>
         )}
 

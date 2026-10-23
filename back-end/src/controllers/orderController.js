@@ -78,12 +78,30 @@ export const verifyPayment = async (req, res) => {
   }
 };
 
+// Helper to safely emit socket events
+const emitSocketEvent = async (event, data, room) => {
+  try {
+    const { io } = await import('../server.js');
+    if (io) {
+      if (room) {
+        io.to(room).emit(event, data);
+      } else {
+        io.emit(event, data);
+      }
+    }
+  } catch (err) {
+    // Non-fatal if socket not ready
+    console.error('Socket broadcast error:', err.message);
+  }
+};
+
 // 3. Fetch user orders
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ customer: req.user._id })
       .populate('items.product')
-      .populate('assignedPartner', 'name phone currentLocation');
+      .populate('assignedPartner', 'name phone email currentLocation')
+      .sort({ createdAt: -1 });
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -101,7 +119,33 @@ export const assignOrder = async (req, res) => {
     )
       .populate('items.product')
       .populate('customer', 'name phone email')
-      .populate('assignedPartner', 'name phone');
+      .populate('assignedPartner', 'name phone email currentLocation');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Broadcast assignment update to order room and admin fleet room
+    emitSocketEvent(
+      'order_status_updated',
+      {
+        orderId: order._id,
+        status: 'processing',
+        assignedPartner: order.assignedPartner,
+        timestamp: new Date().toISOString(),
+      },
+      `order_${order._id}`
+    );
+    emitSocketEvent(
+      'order_status_updated',
+      {
+        orderId: order._id,
+        status: 'processing',
+        assignedPartner: order.assignedPartner,
+        timestamp: new Date().toISOString(),
+      },
+      'admin_fleet_room'
+    );
 
     res.status(200).json(order);
   } catch (error) {
@@ -109,13 +153,39 @@ export const assignOrder = async (req, res) => {
   }
 };
 
+// Fetch single order by ID
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('items.product')
+      .populate('customer', 'name phone email')
+      .populate('assignedPartner', 'name phone email currentLocation');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const isCustomer = order.customer && order.customer._id.toString() === req.user._id.toString();
+    const isPartner = order.assignedPartner && order.assignedPartner._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isCustomer && !isPartner && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view this order' });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Fetch orders assigned specifically to the logged-in delivery partner
 export const getPartnerOrders = async (req, res) => {
   try {
     const orders = await Order.find({ assignedPartner: req.user._id })
       .populate('items.product')
-      .populate('customer', 'name phone')
+      .populate('customer', 'name phone email')
+      .populate('assignedPartner', 'name phone email currentLocation')
       .sort({ updatedAt: -1 });
     res.status(200).json(orders);
   } catch (error) {
@@ -130,7 +200,10 @@ export const updateOrderStatus = async (req, res) => {
     const order = await Order.findOne({
       _id: req.params.id,
       assignedPartner: req.user._id,
-    });
+    })
+      .populate('items.product')
+      .populate('customer', 'name phone email')
+      .populate('assignedPartner', 'name phone email currentLocation');
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found or not assigned to you' });
@@ -139,18 +212,30 @@ export const updateOrderStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
+    // Broadcast status change real-time
+    const statusPayload = {
+      orderId: order._id,
+      status,
+      assignedPartner: order.assignedPartner,
+      timestamp: new Date().toISOString(),
+    };
+
+    emitSocketEvent('order_status_updated', statusPayload, `order_${order._id}`);
+    emitSocketEvent('order_status_updated', statusPayload, 'admin_fleet_room');
+
     res.status(200).json({ message: 'Status updated successfully', order });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 // Fetch all orders across all customers (Admin only)
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find({})
       .populate('items.product')
       .populate('customer', 'name phone email')
-      .populate('assignedPartner', 'name phone')
+      .populate('assignedPartner', 'name phone email currentLocation')
       .sort({ createdAt: -1 });
 
     res.status(200).json(orders);
