@@ -64,7 +64,7 @@ export default function Login() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">TrackFlow Portal</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Unified Logistics</h1>
           <p className="text-xs text-slate-500 mt-1">Sign in to your account</p>
         </div>
 
